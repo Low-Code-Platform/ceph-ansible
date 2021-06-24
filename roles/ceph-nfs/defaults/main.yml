@@ -17,11 +17,11 @@ copy_admin_key: false
 ceph_nfs_enable_service: true
 
 # ceph-nfs systemd service uses ansible's hostname as an instance id,
-# so service name is ceph-nfs@{{ ansible_hostname }}, this is not
+# so service name is ceph-nfs@{{ ansible_facts['hostname'] }}, this is not
 # ideal when ceph-nfs is managed by pacemaker across multiple hosts - in
 # such case it's better to have constant instance id instead which
 # can be set by 'ceph_nfs_service_suffix'
-# ceph_nfs_service_suffix: ansible_hostname
+# ceph_nfs_service_suffix: "{{ ansible_facts['hostname'] }}"
 
 #######################
 # Access type options #
@@ -62,6 +62,18 @@ ceph_nfs_rados_export_index: "ganesha-export-index"
 # when setting 'nfs_file_gw' option as true.
 ceph_nfs_disable_caching: false
 
+# This is the file ganesha will use to control NFSv4 ID mapping
+ceph_nfs_idmap_conf: "/etc/ganesha/idmap.conf"
+
+# idmap configuration file override.
+# This allows you to specify more configuration options
+# using an INI style format.
+# Example:
+# idmap_conf_overrides:
+#   General:
+#     Domain: foo.domain.net
+idmap_conf_overrides: {}
+
 ####################
 # FSAL Ceph Config #
 ####################
@@ -87,7 +99,7 @@ ceph_nfs_rgw_sectype: "sys,krb5,krb5i,krb5p"
 # they must be configered.
 #ceph_nfs_rgw_access_key: "QFAMEDSJP5DEKJO0DDXY"
 #ceph_nfs_rgw_secret_key: "iaSFLDVvDdQt6lkNzHyW4fPLZugBAI1g17LO0+87[MAC[M#C"
-rgw_client_name: client.rgw.{{ ansible_hostname }}
+rgw_client_name: client.rgw.{{ ansible_facts['hostname'] }}
 
 ###################
 # CONFIG OVERRIDE #

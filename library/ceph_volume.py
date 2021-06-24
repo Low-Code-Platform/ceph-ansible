@@ -280,7 +280,7 @@ def get_wal(wal, wal_vg):
     return wal
 
 
-def batch(module, container_image):
+def batch(module, container_image, report=None):
     '''
     Batch prepare OSD devices
     '''
@@ -311,7 +311,8 @@ def batch(module, container_image):
     action = ['lvm', 'batch']
     cmd = build_cmd(action, container_image, cluster)
     cmd.extend(['--%s' % objectstore])
-    cmd.append('--yes')
+    if not report:
+        cmd.append('--yes')
 
     if container_image:
         cmd.append('--prepare')
@@ -476,11 +477,12 @@ def is_lv(module, vg, lv, container_image):
 
     rc, cmd, out, err = exec_command(module, cmd)
 
-    result = json.loads(out)['report'][0]['lv']
-    if rc == 0 and len(result) > 0:
-        return True
-    else:
-        return False
+    if rc == 0:
+        result = json.loads(out)['report'][0]['lv']
+        if len(result) > 0:
+            return True
+
+    return False
 
 
 def zap_devices(module, container_image):
@@ -677,7 +679,7 @@ def run_module():
             '--format=json',
         ]
 
-        cmd = batch(module, container_image)
+        cmd = batch(module, container_image, report=True)
         batch_report_cmd = copy.copy(cmd)
         batch_report_cmd.extend(report_flags)
 

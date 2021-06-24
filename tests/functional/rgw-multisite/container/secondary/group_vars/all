@@ -6,8 +6,8 @@ ceph_repository: community
 cluster: ceph
 public_network: "192.168.107.0/24"
 cluster_network: "192.168.108.0/24"
-monitor_interface: "{{ 'eth1' if ansible_distribution == 'CentOS' else 'ens6' }}"
-radosgw_interface: "{{ 'eth1' if ansible_distribution == 'CentOS' else 'ens6' }}"
+monitor_interface: "{{ 'eth1' if ansible_facts['distribution'] == 'CentOS' else 'ens6' }}"
+radosgw_interface: "{{ 'eth1' if ansible_facts['distribution'] == 'CentOS' else 'ens6' }}"
 journal_size: 100
 osd_objectstore: "bluestore"
 copy_admin_key: true
@@ -26,6 +26,7 @@ ceph_conf_overrides:
     mon_allow_pool_size_one: true
     mon_warn_on_pool_no_redundancy: false
     osd_pool_default_size: 1
+    mon_max_pg_per_osd: 512
 dashboard_enabled: False
 ceph_docker_registry: quay.ceph.io
 ceph_docker_image: ceph-ci/daemon

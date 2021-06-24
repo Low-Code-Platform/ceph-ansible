@@ -1,14 +1,14 @@
 ---
 - block:
-  - name: set_fact container_exec_cmd_nfs - external
+  - name: set_fact exec_cmd_nfs - external
     set_fact:
       exec_cmd_nfs: "{{ container_binary + ' run --rm --net=host -v /etc/ceph:/etc/ceph:z -v /var/lib/ceph/:/var/lib/ceph/:z -v /var/log/ceph/:/var/log/ceph/:z --entrypoint=rados ' + ceph_docker_registry + '/' + ceph_docker_image + ':' + ceph_docker_image_tag if containerized_deployment | bool else 'rados' }} -n client.{{ ceph_nfs_ceph_user }} -k /var/lib/ceph/radosgw/{{ cluster }}-rgw.{{ ceph_nfs_ceph_user }}/keyring"
       delegate_node: "{{ inventory_hostname }}"
     when: groups.get(mon_group_name, []) | length == 0
 
-  - name: set_fact container_exec_cmd_nfs - internal
+  - name: set_fact exec_cmd_nfs - internal
     set_fact:
-      exec_cmd_nfs: "{{ container_binary + ' exec ceph-mon-' + hostvars[groups[mon_group_name][0]]['ansible_hostname'] if containerized_deployment | bool else '' }} rados"
+      exec_cmd_nfs: "{{ container_binary + ' exec ceph-mon-' + hostvars[groups[mon_group_name][0]]['ansible_facts']['hostname'] if containerized_deployment | bool else '' }} rados"
       delegate_node: "{{ groups[mon_group_name][0] }}"
     when: groups.get(mon_group_name, []) | length > 0
 
@@ -47,6 +47,18 @@
     mode: "0644"
   notify: restart ceph nfss
 
+- name: generate ganesha idmap.conf file
+  action: config_template
+  args:
+    src: "idmap.conf.j2"
+    dest: "{{ ceph_nfs_idmap_conf }}"
+    owner: "root"
+    group: "root"
+    mode: "0644"
+    config_overrides: "{{ idmap_conf_overrides }}"
+    config_type: ini
+  notify: restart ceph nfss
+
 - name: create exports directory
   file:
     path: /etc/ganesha/export.d
@@ -72,7 +84,7 @@
 
 - name: systemd start nfs container
   systemd:
-    name: ceph-nfs@{{ ceph_nfs_service_suffix | default(ansible_hostname) }}
+    name: ceph-nfs@{{ ceph_nfs_service_suffix | default(ansible_facts['hostname']) }}
     state: started
     enabled: yes
     masked: no
