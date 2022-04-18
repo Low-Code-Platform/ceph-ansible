@@ -13,13 +13,14 @@
       command: "{{ hostvars[groups.get(mon_group_name)[0]]['container_exec_cmd'] }} ceph --cluster {{ cluster }} auth get {{ item.name }}"
       register: _rgw_keys
       with_items:
-        - { name: "client.bootstrap-rgw", path: "/var/lib/ceph/bootstrap-rgw/{{ cluster }}.keyring", copy_key: true }
+        - { name: "client.bootstrap-rgw", path: "/var/lib/ceph/bootstrap-rgw/{{ cluster }}.keyring", copy_key: "{{ nfs_obj_gw }}" }
         - { name: "client.admin", path: "/etc/ceph/{{ cluster }}.client.admin.keyring", copy_key: "{{ copy_admin_key }}" }
       delegate_to: "{{ groups.get(mon_group_name)[0] }}"
       run_once: true
       when:
         - cephx | bool
         - item.copy_key | bool
+      no_log: "{{ no_log_on_ceph_key_tasks }}"
 
     - name: copy ceph key(s) if needed
       copy:
@@ -32,6 +33,7 @@
       when:
         - cephx | bool
         - item.item.copy_key | bool
+      no_log: "{{ no_log_on_ceph_key_tasks }}"
   when: groups.get(mon_group_name, []) | length > 0
 
 - name: dbus related tasks
